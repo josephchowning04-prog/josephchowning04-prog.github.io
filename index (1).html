@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Macrolog</title>
+<style>
+:root{
+  --bg:#f7f7f5; --card:#ffffff; --ink:#1a1a1a; --sub:#6b6b6b;
+  --line:#e5e5e2; --accent:#2f6fed;
+  --cal:#e8a33d; --protein:#d64545; --carb:#2f6fed; --fat:#1f9d55;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#141414; --card:#1e1e1e; --ink:#f0f0ee; --sub:#9a9a9a; --line:#2c2c2c; }
+}
+:root[data-theme="dark"]{ --bg:#141414; --card:#1e1e1e; --ink:#f0f0ee; --sub:#9a9a9a; --line:#2c2c2c; }
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;min-height:100%;}
+.hero{background:linear-gradient(135deg,#2f6fed,#7c3aed);padding:32px 16px 40px;color:#fff;}
+.hero .wrap{padding-top:0;padding-bottom:0;}
+.wrap{max-width:600px;margin:0 auto;padding:24px 16px 60px;}
+h1{font-size:1.7rem;margin:0 0 4px;font-weight:800;letter-spacing:-.01em;}
+.tag{color:var(--sub);font-size:.85rem;margin:0 0 20px;}
+.hero .tag{color:rgba(255,255,255,.85);margin:0;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 8px 20px -12px rgba(0,0,0,.15);}
+.card:first-of-type{margin-top:-24px;}
+label{display:block;font-size:.75rem;color:var(--sub);margin:10px 0 4px;text-transform:uppercase;letter-spacing:.03em;}
+input{width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:.95rem;transition:border-color .15s;}
+input:focus{outline:none;border-color:var(--accent);}
+.row{display:flex;gap:10px;}
+.row > div{flex:1;}
+button{margin-top:14px;width:100%;padding:12px;border:none;border-radius:9px;background:linear-gradient(135deg,#2f6fed,#7c3aed);color:#fff;font-size:.95rem;font-weight:600;cursor:pointer;box-shadow:0 4px 12px -4px rgba(47,111,237,.5);transition:transform .1s,box-shadow .1s;}
+button:hover{box-shadow:0 6px 16px -4px rgba(47,111,237,.6);}
+button:active{transform:scale(.98);opacity:.9;}
+button.ghost{background:transparent;border:1px solid var(--line);color:var(--sub);width:auto;margin:0;padding:4px 9px;font-size:.75rem;font-weight:500;}
+button.link{background:none;border:none;color:var(--accent);width:auto;padding:0;margin-top:8px;font-size:.8rem;font-weight:500;text-align:left;}
+.bars{display:flex;flex-direction:column;gap:12px;margin-bottom:4px;}
+.bar-label{display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:4px;}
+.bar-label span:last-child{color:var(--sub);}
+.bar-track{background:var(--line);border-radius:6px;height:8px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:6px;}
+.entry{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding:10px 0;gap:8px;}
+.entry:last-child{border-bottom:none;}
+.entry-name{font-weight:600;font-size:.92rem;}
+.entry-macros{color:var(--sub);font-size:.78rem;}
+.empty{color:var(--sub);text-align:center;padding:24px 0;font-size:.9rem;}
+.goals{display:none;}
+.goals.open{display:block;}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="wrap">
+    <h1>🍽️ Macrolog</h1>
+    <p class="tag">Log what you eat. Watch calories and macros stack up against today's goal.</p>
+  </div>
+</div>
+<div class="wrap">
+  <div class="card">
+    <div class="bars" id="bars"></div>
+    <button class="link" id="toggle-goals">Edit daily goals</button>
+    <div class="goals" id="goals-form">
+      <div class="row">
+        <div><label>Calories</label><input id="g-cal" type="number" min="0"></div>
+        <div><label>Protein (g)</label><input id="g-protein" type="number" min="0"></div>
+      </div>
+      <div class="row">
+        <div><label>Carbs (g)</label><input id="g-carb" type="number" min="0"></div>
+        <div><label>Fat (g)</label><input id="g-fat" type="number" min="0"></div>
+      </div>
+      <button id="save-goals">Save goals</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <label>Food name</label>
+    <input id="f-name" placeholder="e.g. Grilled chicken bowl">
+    <div class="row">
+      <div><label>Calories</label><input id="f-cal" type="number" min="0"></div>
+      <div><label>Protein (g)</label><input id="f-protein" type="number" min="0"></div>
+    </div>
+    <div class="row">
+      <div><label>Carbs (g)</label><input id="f-carb" type="number" min="0"></div>
+      <div><label>Fat (g)</label><input id="f-fat" type="number" min="0"></div>
+    </div>
+    <button id="add-btn">Add to today's log</button>
+  </div>
+
+  <div class="card" id="log"></div>
+</div>
+
+<script>
+const DEFAULT_GOALS = {cal:2000, protein:120, carb:225, fat:65};
+let goals = {...DEFAULT_GOALS};
+let entries = [];
+
+function todayKey(){
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+}
+
+function loadState(){
+  try{ goals = {...DEFAULT_GOALS, ...JSON.parse(localStorage.getItem('macrolog_goals')||'{}')}; }catch(e){}
+  try{
+    const all = JSON.parse(localStorage.getItem('macrolog_entries')||'{}');
+    entries = all[todayKey()] || [];
+  }catch(e){ entries = []; }
+}
+
+function saveEntries(){
+  let all = {};
+  try{ all = JSON.parse(localStorage.getItem('macrolog_entries')||'{}'); }catch(e){}
+  all[todayKey()] = entries;
+  // keep last 14 days only
+  const keys = Object.keys(all);
+  if(keys.length > 14){
+    keys.sort().slice(0, keys.length-14).forEach(k=>delete all[k]);
+  }
+  localStorage.setItem('macrolog_entries', JSON.stringify(all));
+}
+
+function saveGoals(){
+  localStorage.setItem('macrolog_goals', JSON.stringify(goals));
+}
+
+function esc(s){
+  return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function totals(){
+  return entries.reduce((t,e)=>({
+    cal:t.cal+e.cal, protein:t.protein+e.protein, carb:t.carb+e.carb, fat:t.fat+e.fat
+  }), {cal:0,protein:0,carb:0,fat:0});
+}
+
+function barRow(label, val, goal, color, unit){
+  const pct = goal>0 ? Math.min(100, Math.round(100*val/goal)) : 0;
+  return `<div>
+    <div class="bar-label"><span>${label}</span><span>${val}${unit} / ${goal}${unit}</span></div>
+    <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+  </div>`;
+}
+
+function render(){
+  const t = totals();
+  document.getElementById('bars').innerHTML =
+    barRow('Calories', t.cal, goals.cal, 'var(--cal)', '') +
+    barRow('Protein', t.protein, goals.protein, 'var(--protein)', 'g') +
+    barRow('Carbs', t.carb, goals.carb, 'var(--carb)', 'g') +
+    barRow('Fat', t.fat, goals.fat, 'var(--fat)', 'g');
+
+  document.getElementById('g-cal').value = goals.cal;
+  document.getElementById('g-protein').value = goals.protein;
+  document.getElementById('g-carb').value = goals.carb;
+  document.getElementById('g-fat').value = goals.fat;
+
+  const log = document.getElementById('log');
+  if(!entries.length){
+    log.innerHTML = '<div class="empty">Nothing logged today yet.</div>';
+  } else {
+    log.innerHTML = entries.map((e,i)=>`
+      <div class="entry">
+        <div>
+          <div class="entry-name">${esc(e.name)}</div>
+          <div class="entry-macros">${e.cal} cal · P${e.protein} C${e.carb} F${e.fat}</div>
+        </div>
+        <button class="ghost" data-i="${i}">Remove</button>
+      </div>`).join('');
+  }
+}
+
+document.getElementById('toggle-goals').addEventListener('click', ()=>{
+  document.getElementById('goals-form').classList.toggle('open');
+});
+
+document.getElementById('save-goals').addEventListener('click', ()=>{
+  goals = {
+    cal: Number(document.getElementById('g-cal').value)||0,
+    protein: Number(document.getElementById('g-protein').value)||0,
+    carb: Number(document.getElementById('g-carb').value)||0,
+    fat: Number(document.getElementById('g-fat').value)||0,
+  };
+  saveGoals();
+  document.getElementById('goals-form').classList.remove('open');
+  render();
+});
+
+document.getElementById('add-btn').addEventListener('click', ()=>{
+  const name = document.getElementById('f-name').value.trim();
+  const cal = Number(document.getElementById('f-cal').value)||0;
+  const protein = Number(document.getElementById('f-protein').value)||0;
+  const carb = Number(document.getElementById('f-carb').value)||0;
+  const fat = Number(document.getElementById('f-fat').value)||0;
+  if(!name){ alert('Give the food a name.'); return; }
+  entries.push({name, cal, protein, carb, fat});
+  saveEntries();
+  ['f-name','f-cal','f-protein','f-carb','f-fat'].forEach(id=>document.getElementById(id).value='');
+  render();
+});
+
+document.getElementById('log').addEventListener('click', (e)=>{
+  const btn = e.target.closest('button[data-i]');
+  if(!btn) return;
+  entries.splice(Number(btn.dataset.i), 1);
+  saveEntries();
+  render();
+});
+
+loadState();
+render();
+</script>
+</body>
+</html>
